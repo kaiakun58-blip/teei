@@ -37,24 +37,46 @@ NSFW_API_URL = "https://api.moderatecontent.com/moderate/"
 
 # ========== Logging ==========
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s', level=logging.INFO
+    format='%(asctime)s - %(levelname)s - %(message)s', 
+    level=logging.INFO,
+    handlers=[
+        logging.FileHandler('bot.log'),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 
-# Tambahan logging untuk debugging
+# Enhanced logging functions for debugging
 def log_user_action(user_id, username, action, details=""):
     """Log semua aksi user untuk debugging"""
     logger.info(f"USER_ACTION | User {user_id} (@{username}) | {action} | {details}")
 
-def log_error(error_msg, user_id=None, username=None):
-    """Log error dengan context user"""
+def log_error(error_msg, user_id=None, username=None, exception=None):
+    """Log error dengan context user dan exception details"""
     user_info = f"User {user_id} (@{username})" if user_id else "System"
-    logger.error(f"ERROR | {user_info} | {error_msg}")
+    error_details = f"{error_msg}"
+    if exception:
+        error_details += f" | Exception: {type(exception).__name__}: {str(exception)}"
+    logger.error(f"ERROR | {user_info} | {error_details}")
 
 def log_feature_usage(feature, user_id, username, success=True, details=""):
     """Log penggunaan fitur"""
     status = "SUCCESS" if success else "FAILED"
     logger.info(f"FEATURE | {feature} | User {user_id} (@{username}) | {status} | {details}")
+
+def log_chat_session(user_id, partner_id, action, details=""):
+    """Log chat session activities"""
+    logger.info(f"CHAT_SESSION | User {user_id} | Partner {partner_id} | {action} | {details}")
+
+def log_database_operation(operation, table, user_id=None, details=""):
+    """Log database operations"""
+    user_info = f" | User {user_id}" if user_id else ""
+    logger.debug(f"DB_OP | {operation} | Table: {table}{user_info} | {details}")
+
+def log_message_handling(message_type, user_id, username, success=True, details=""):
+    """Log message handling (text, photo, video, etc.)"""
+    status = "SUCCESS" if success else "FAILED"
+    logger.info(f"MESSAGE | {message_type} | User {user_id} (@{username}) | {status} | {details}")
 
 # ========== State ==========
 PROFILE_GENDER, PROFILE_AGE, PROFILE_BIO, PROFILE_PHOTO, PROFILE_LANG, PROFILE_HOBBY = range(6)
@@ -89,14 +111,15 @@ current_quiz = {}
 def db():
     try:
         conn = sqlite3.connect(DB_PATH)
-        logger.debug(f"Database connection established")
+        log_database_operation("CONNECT", "database", details="Connection established")
         return conn
     except Exception as e:
-        log_error(f"Database connection failed: {e}")
+        log_error(f"Database connection failed: {e}", exception=e)
         raise
 
 def init_db():
     try:
+        log_database_operation("INIT", "database", details="Starting database initialization")
         with db() as conn:
             c = conn.cursor()
             # Profil user
