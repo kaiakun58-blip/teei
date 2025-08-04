@@ -1,0 +1,69 @@
+2025-08-04 17:44:59,621 - INFO - USER_ACTION | User 123456789 (@testuser) | START_COMMAND | User started bot
+2025-08-04 17:44:59,621 - INFO - USER_ACTION | User 123456789 (@testuser) | HELP_COMMAND | 
+2025-08-04 17:44:59,621 - INFO - USER_ACTION | User 123456789 (@testuser) | PROFILE_COMMAND | Started profile setup
+2025-08-04 17:44:59,621 - ERROR - ERROR | User 123456789 (@testuser) | Test error occurred | Exception: ValueError: Test error message
+2025-08-04 17:44:59,621 - INFO - FEATURE | PROFILE_SETUP | User 123456789 (@testuser) | SUCCESS | Profile completed successfully
+2025-08-04 17:44:59,621 - INFO - FEATURE | SEARCH_PRO | User 123456789 (@testuser) | FAILED | User not Pro
+2025-08-04 17:44:59,621 - INFO - CHAT_SESSION | User 123456789 | Partner 987654321 | SESSION_STARTED | New chat session
+2025-08-04 17:44:59,621 - INFO - CHAT_SESSION | User 123456789 | Partner 987654321 | MESSAGE_SENT | Text message sent
+2025-08-04 17:44:59,621 - INFO - MESSAGE | TEXT | User 123456789 (@testuser) | SUCCESS | Text length: 50 chars
+2025-08-04 17:44:59,621 - INFO - MESSAGE | PHOTO | User 123456789 (@testuser) | SUCCESS | Photo ID: ABC123
+2025-08-04 17:44:59,621 - INFO - MESSAGE | VIDEO | User 123456789 (@testuser) | FAILED | File too large
+2025-08-04 17:44:59,621 - INFO - CONVERSATION | User 123456789 (@testuser) | State: PROFILE_GENDER | Moving to gender input
+2025-08-04 17:44:59,621 - INFO - CONVERSATION | User 123456789 (@testuser) | State: PROFILE_AGE | Moving to age input
+2025-08-04 17:44:59,621 - INFO - CALLBACK | User 123456789 (@testuser) | Data: search_gender | SUCCESS | Search type selection
+2025-08-04 17:44:59,621 - INFO - CALLBACK | User 123456789 (@testuser) | Data: quizpro_123 | SUCCESS | Quiz reward claimed
+2025-08-04 17:44:59,622 - INFO - QUIZ | User 123456789 (@testuser) | QUIZ_STARTED | Quiz #1234 started
+2025-08-04 17:44:59,622 - INFO - QUIZ | User 123456789 (@testuser) | QUIZ_CORRECT | Correct answer: 5 points earned
+2025-08-04 17:44:59,622 - INFO - PRO_FEATURE | User 123456789 (@testuser) | SEARCH_PRO | SUCCESS | Pro search completed
+2025-08-04 17:44:59,622 - INFO - PRO_FEATURE | User 123456789 (@testuser) | QUIZ_PRO_REWARD | SUCCESS | Pro reward claimed
+2025-08-04 17:44:59,622 - INFO - MODERATION | User 123456789 (@testuser) | IMAGE | NSFW_DETECTED | File: ABC123
+2025-08-04 17:44:59,622 - INFO - MODERATION | User 123456789 (@testuser) | TEXT | BAD_WORDS | Kata kasar terdeteksi
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | START_COMMAND | User started bot
+2025-08-04 17:44:59,622 - INFO - FEATURE | START_COMMAND | User 123456789 (@demo_user) | SUCCESS | Profile complete
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_COMMAND | Started profile setup
+2025-08-04 17:44:59,622 - INFO - CONVERSATION | User 123456789 (@demo_user) | State: PROFILE_GENDER | Gender selection started
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_GENDER_SET | Gender set to: Male
+2025-08-04 17:44:59,622 - INFO - CONVERSATION | User 123456789 (@demo_user) | State: PROFILE_AGE | Age input started
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_AGE_SET | Age set to: 25
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_BIO_SET | Bio length: 100 chars
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_PHOTO_SET | Photo ID: PHOTO123
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_LANG_SET | Language set to: Indonesian
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PROFILE_COMPLETED | Hobbies: Music, Gaming
+2025-08-04 17:44:59,622 - INFO - FEATURE | PROFILE_SETUP | User 123456789 (@demo_user) | SUCCESS | Profile completed successfully
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | SEARCH_PRO_COMMAND | 
+2025-08-04 17:44:59,622 - INFO - FEATURE | SEARCH_PRO | User 123456789 (@demo_user) | SUCCESS | Search options shown
+2025-08-04 17:44:59,622 - INFO - CALLBACK | User 123456789 (@demo_user) | Data: search_gender | SUCCESS | Gender search selected
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | SEARCH_GENDER_SET | Gender preference: Female
+2025-08-04 17:44:59,622 - INFO - CHAT_SESSION | User 123456789 | Partner 987654321 | SESSION_STARTED | New chat session
+2025-08-04 17:44:59,622 - INFO - MESSAGE | TEXT | User 123456789 (@demo_user) | SUCCESS | Text length: 30 chars
+2025-08-04 17:44:59,622 - INFO - CHAT_SESSION | User 123456789 | Partner 987654321 | MESSAGE_SENT | Text message sent
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | PLAY_QUIZ_COMMAND | 
+2025-08-04 17:44:59,622 - INFO - QUIZ | User 123456789 (@demo_user) | QUIZ_STARTED | Quiz #5678 started
+2025-08-04 17:44:59,622 - INFO - QUIZ | User 123456789 (@demo_user) | QUIZ_CORRECT | Correct answer: 10 points earned
+2025-08-04 17:44:59,622 - INFO - CALLBACK | User 123456789 (@demo_user) | Data: quizpoin_5678 | SUCCESS | Points reward claimed
+2025-08-04 17:44:59,622 - INFO - USER_ACTION | User 123456789 (@demo_user) | REPORT_COMMAND | 
+2025-08-04 17:44:59,622 - INFO - CALLBACK | User 123456789 (@demo_user) | Data: report_spam | SUCCESS | Report submitted
+2025-08-04 17:44:59,622 - INFO - MODERATION | User 123456789 (@demo_user) | USER_REPORT | SPAM | User reported for spam
+2025-08-04 17:47:48,051 - INFO - USER_ACTION | User 123456789 (@testuser) | START_COMMAND | User started bot
+2025-08-04 17:47:48,051 - INFO - USER_ACTION | User 123456789 (@testuser) | PROFILE_COMMAND | Started profile setup
+2025-08-04 17:47:48,051 - INFO - USER_ACTION | User 123456789 (@testuser) | SEARCH_PRO_COMMAND | Searching for Pro partner
+2025-08-04 17:47:48,051 - INFO - FEATURE | PROFILE_SETUP | User 123456789 (@testuser) | SUCCESS | Profile completed successfully
+2025-08-04 17:47:48,051 - INFO - FEATURE | SEARCH_PRO | User 123456789 (@testuser) | FAILED | User not Pro
+2025-08-04 17:47:48,051 - INFO - FEATURE | QUIZ_PLAY | User 123456789 (@testuser) | SUCCESS | Quiz completed, earned 50 points
+2025-08-04 17:47:48,052 - INFO - MESSAGE | TEXT | User 123456789 (@testuser) | SUCCESS | Text message forwarded
+2025-08-04 17:47:48,052 - INFO - MESSAGE | PHOTO | User 123456789 (@testuser) | SUCCESS | Photo processed and sent
+2025-08-04 17:47:48,052 - INFO - MESSAGE | VIDEO | User 123456789 (@testuser) | FAILED | Video too large
+2025-08-04 17:47:48,052 - INFO - QUIZ | User 123456789 (@testuser) | QUIZ_STARTED | Quiz ID: Q123
+2025-08-04 17:47:48,052 - INFO - QUIZ | User 123456789 (@testuser) | QUIZ_ANSWERED | Correct answer, +10 points
+2025-08-04 17:47:48,052 - INFO - QUIZ | User 123456789 (@testuser) | QUIZ_COMPLETED | Total score: 85/100
+2025-08-04 17:47:48,052 - INFO - PRO_FEATURE | User 123456789 (@testuser) | PRO_SEARCH | SUCCESS | Found 3 Pro partners
+2025-08-04 17:47:48,052 - INFO - PRO_FEATURE | User 123456789 (@testuser) | PRO_UPGRADE | FAILED | Payment failed
+2025-08-04 17:47:48,052 - INFO - MODERATION | User 123456789 (@testuser) | TEXT | BAD_WORDS_DETECTED | Kata kasar: anjing
+2025-08-04 17:47:48,052 - INFO - MODERATION | User 123456789 (@testuser) | IMAGE | NSFW_DETECTED | File: PHOTO123
+2025-08-04 17:47:48,052 - INFO - MEDIA_PROC | User 123456789 (@testuser) | Type: PHOTO | File: PHOTO123 | Size: 1024000 bytes | Time: 150ms
+2025-08-04 17:47:48,052 - INFO - MEDIA_PROC | User 123456789 (@testuser) | Type: VIDEO | File: VIDEO456 | Size: 5242880 bytes | Time: 800ms
+2025-08-04 17:47:48,052 - INFO - HEALTH | Database | CONNECTED | SQLite connection established
+2025-08-04 17:47:48,052 - INFO - HEALTH | API | RESPONDING | NSFW API response time: 200ms
+2025-08-04 17:47:48,052 - INFO - HEALTH | Bot | READY | All handlers registered successfully
+2025-08-04 17:47:48,052 - ERROR - ERROR | User 123456789 (@testuser) | Test error occurred | Exception: ValueError: Test error for logging
