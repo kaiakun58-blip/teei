@@ -100,6 +100,92 @@ def log_moderation(user_id, username, content_type, action, details=""):
     """Log content moderation activities"""
     logger.info(f"MODERATION | User {user_id} (@{username}) | {content_type} | {action} | {details}")
 
+def log_bot_startup():
+    """Log bot startup information"""
+    logger.info("=== BOT STARTUP LOG ===")
+    logger.info(f"Bot Token Status: {'CONFIGURED' if BOT_TOKEN != 'YOUR_BOT_TOKEN' else 'NOT CONFIGURED'}")
+    logger.info(f"Owner ID: {OWNER_ID}")
+    logger.info(f"Database Path: {DB_PATH}")
+    logger.info(f"NSFW API Status: {'CONFIGURED' if NSFW_API_KEY != 'YOUR_MODERATECONTENT_API_KEY' else 'NOT CONFIGURED'}")
+    logger.info(f"Pro Week Price: {PRO_WEEK_PRICE}")
+    logger.info(f"Pro Month Price: {PRO_MONTH_PRICE}")
+    logger.info(f"Quiz Limit Winners: {QUIZ_LIMIT_WINNERS}")
+    logger.info("=== STARTUP LOG COMPLETE ===")
+
+def log_handler_registration(handler_type, handler_name):
+    """Log handler registration"""
+    logger.info(f"HANDLER_REG | {handler_type} | {handler_name}")
+
+def log_partner_search(user_id, username, search_type, preferences, result):
+    """Log partner search attempts"""
+    logger.info(f"PARTNER_SEARCH | User {user_id} (@{username}) | Type: {search_type} | Prefs: {preferences} | Result: {result}")
+
+def log_session_management(user_id, partner_id, action, session_type="normal"):
+    """Log session management activities"""
+    logger.info(f"SESSION_MGMT | User {user_id} | Partner {partner_id} | Action: {action} | Type: {session_type}")
+
+def log_points_transaction(user_id, username, transaction_type, amount, balance_after):
+    """Log points transactions"""
+    logger.info(f"POINTS_TXN | User {user_id} (@{username}) | Type: {transaction_type} | Amount: {amount} | Balance: {balance_after}")
+
+def log_pro_subscription(user_id, username, subscription_type, duration_days, expires_at):
+    """Log pro subscription changes"""
+    logger.info(f"PRO_SUB | User {user_id} (@{username}) | Type: {subscription_type} | Duration: {duration_days} days | Expires: {datetime.fromtimestamp(expires_at)}")
+
+def log_group_activity(user_id, username, group_id, action, member_count=None):
+    """Log group chat activities"""
+    member_info = f" | Members: {member_count}" if member_count else ""
+    logger.info(f"GROUP_ACTIVITY | User {user_id} (@{username}) | Group #{group_id} | Action: {action}{member_info}")
+
+def log_poll_creation(user_id, username, poll_id, question, options_count):
+    """Log poll creation"""
+    logger.info(f"POLL_CREATE | User {user_id} (@{username}) | Poll #{poll_id} | Q: {question} | Options: {options_count}")
+
+def log_feedback_submission(user_id, username, partner_id, rating, comment=""):
+    """Log feedback submissions"""
+    comment_info = f" | Comment: {comment}" if comment else ""
+    logger.info(f"FEEDBACK_SUB | User {user_id} (@{username}) | Partner {partner_id} | Rating: {rating} stars{comment_info}")
+
+def log_report_submission(user_id, username, reported_id, reason):
+    """Log report submissions"""
+    logger.info(f"REPORT_SUB | User {user_id} (@{username}) | Reported {reported_id} | Reason: {reason}")
+
+def log_block_action(user_id, username, blocked_id, action_type):
+    """Log user blocking actions"""
+    logger.info(f"BLOCK_ACTION | User {user_id} (@{username}) | Blocked {blocked_id} | Type: {action_type}")
+
+def log_secret_mode(user_id, username, action, enabled=True):
+    """Log secret mode activities"""
+    status = "ENABLED" if enabled else "DISABLED"
+    logger.info(f"SECRET_MODE | User {user_id} (@{username}) | Action: {action} | Status: {status}")
+
+def log_media_processing(user_id, username, media_type, file_id, file_size=None, processing_time=None):
+    """Log media processing activities"""
+    size_info = f" | Size: {file_size}" if file_size else ""
+    time_info = f" | Time: {processing_time}ms" if processing_time else ""
+    logger.info(f"MEDIA_PROC | User {user_id} (@{username}) | Type: {media_type} | File: {file_id}{size_info}{time_info}")
+
+def log_api_call(api_name, success=True, response_time=None, error_msg=None):
+    """Log external API calls"""
+    status = "SUCCESS" if success else "FAILED"
+    time_info = f" | Time: {response_time}ms" if response_time else ""
+    error_info = f" | Error: {error_msg}" if error_msg else ""
+    logger.info(f"API_CALL | {api_name} | {status}{time_info}{error_info}")
+
+def log_performance_metric(metric_name, value, unit=""):
+    """Log performance metrics"""
+    unit_info = f" {unit}" if unit else ""
+    logger.info(f"PERFORMANCE | {metric_name}: {value}{unit_info}")
+
+def log_security_event(event_type, user_id=None, username=None, details=""):
+    """Log security-related events"""
+    user_info = f" | User {user_id} (@{username})" if user_id else ""
+    logger.warning(f"SECURITY | {event_type}{user_info} | {details}")
+
+def log_system_health(component, status, details=""):
+    """Log system health information"""
+    logger.info(f"HEALTH | {component} | {status} | {details}")
+
 # ========== State ==========
 PROFILE_GENDER, PROFILE_AGE, PROFILE_BIO, PROFILE_PHOTO, PROFILE_LANG, PROFILE_HOBBY = range(6)
 SEARCH_TYPE, SEARCH_GENDER, SEARCH_HOBBY, SEARCH_AGE_MIN, SEARCH_AGE_MAX = range(6, 11)
@@ -368,7 +454,16 @@ def add_session(user_id, partner_id, secret_mode=False):
             c.execute("INSERT OR REPLACE INTO sessions (user_id, partner_id, started_at, secret_mode) VALUES (?,?,?,?)", (user_id, partner_id, now, int(secret_mode)))
             c.execute("INSERT OR REPLACE INTO sessions (user_id, partner_id, started_at, secret_mode) VALUES (?,?,?,?)", (partner_id, user_id, now, int(secret_mode)))
             conn.commit()
-        logger.info(f"Session created: {user_id} <-> {partner_id} (secret_mode: {secret_mode})")
+        
+        # Get usernames for logging
+        c.execute("SELECT user_id, username FROM user_profiles WHERE user_id IN (?, ?)", (user_id, partner_id))
+        usernames = {row[0]: row[1] for row in c.fetchall()}
+        user1_username = usernames.get(user_id, "unknown")
+        user2_username = usernames.get(partner_id, "unknown")
+        
+        session_type = "SECRET" if secret_mode else "NORMAL"
+        log_session_management(user_id, partner_id, "CREATED", session_type)
+        logger.info(f"Session created: {user_id} (@{user1_username}) <-> {partner_id} (@{user2_username}) (secret_mode: {secret_mode})")
     except Exception as e:
         log_error(f"Add session failed: {e}", user_id)
 
@@ -383,7 +478,15 @@ def end_session(user_id):
                 c.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
                 c.execute("DELETE FROM sessions WHERE user_id=?", (partner_id,))
                 conn.commit()
-                logger.info(f"Session ended: {user_id} <-> {partner_id}")
+                
+                # Get usernames for logging
+                c.execute("SELECT user_id, username FROM user_profiles WHERE user_id IN (?, ?)", (user_id, partner_id))
+                usernames = {row[0]: row[1] for row in c.fetchall()}
+                user1_username = usernames.get(user_id, "unknown")
+                user2_username = usernames.get(partner_id, "unknown")
+                
+                log_session_management(user_id, partner_id, "ENDED", "NORMAL")
+                logger.info(f"Session ended: {user_id} (@{user1_username}) <-> {partner_id} (@{user2_username})")
                 return partner_id
         logger.debug(f"No active session found for user {user_id}")
         return None
@@ -407,7 +510,14 @@ def find_partner(user_id, gender_pref=None, hobby_pref=None, age_min=None, age_m
                 params += [age_min, age_max]
             c.execute(query, tuple(params))
             partners = c.fetchall()
-            logger.debug(f"Found {len(partners)} potential partners for user {user_id}")
+            
+            # Get user info for logging
+            c.execute("SELECT username FROM user_profiles WHERE user_id=?", (user_id,))
+            user_row = c.fetchone()
+            username = user_row[0] if user_row else "unknown"
+            
+            preferences = f"Gender: {gender_pref}, Hobby: {hobby_pref}, Age: {age_min}-{age_max}" if any([gender_pref, hobby_pref, age_min, age_max]) else "Random"
+            log_partner_search(user_id, username, "PRO_SEARCH" if any([gender_pref, hobby_pref, age_min, age_max]) else "RANDOM", preferences, f"Found {len(partners)} candidates")
             
             # Prioritas: gender + hobi
             if hobby_pref:
@@ -415,21 +525,21 @@ def find_partner(user_id, gender_pref=None, hobby_pref=None, age_min=None, age_m
                     if pid in block_ids: continue
                     hobbies = hobbies_str.split(",") if hobbies_str else []
                     if hobby_pref in hobbies:
-                        logger.info(f"Partner found with hobby match: {user_id} -> {pid} (hobby: {hobby_pref})")
+                        log_partner_search(user_id, username, "HOBBY_MATCH", f"Hobby: {hobby_pref}", f"Matched with {pid}")
                         return pid
                 # Fallback: gender saja
                 for pid, hobbies_str in partners:
                     if pid in block_ids: continue
-                    logger.info(f"Partner found with gender match: {user_id} -> {pid} (gender: {gender_pref})")
+                    log_partner_search(user_id, username, "GENDER_MATCH", f"Gender: {gender_pref}", f"Matched with {pid}")
                     return pid
-                logger.info(f"No partner found for user {user_id} with preferences")
+                log_partner_search(user_id, username, "NO_MATCH", preferences, "No suitable partner found")
                 return None
             else:
                 for pid, hobbies_str in partners:
                     if pid in block_ids: continue
-                    logger.info(f"Partner found randomly: {user_id} -> {pid}")
+                    log_partner_search(user_id, username, "RANDOM_MATCH", "Random", f"Matched with {pid}")
                     return pid
-                logger.info(f"No partner found for user {user_id}")
+                log_partner_search(user_id, username, "NO_MATCH", "Random", "No available partners")
                 return None
     except Exception as e:
         log_error(f"Find partner failed: {e}", user_id)
@@ -905,16 +1015,22 @@ async def quiz_reward_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 c.execute("UPDATE quiz_winners SET prize=? WHERE quiz_id=? AND user_id=?", ("pro", quiz_id, user_id))
                 conn.commit()
             
+            # Enhanced logging
+            log_pro_subscription(user_id, username, "QUIZ_REWARD", 1, expires_at)
             log_feature_usage("QUIZ_REWARD", user_id, username, True, f"Quiz #{quiz_id} Pro reward claimed")
             log_pro_feature(user_id, username, "QUIZ_PRO_REWARD", True, f"Pro activated for 1 day from quiz #{quiz_id}")
             await query.edit_message_text("✅ Pro aktif 1 hari!")
         elif query.data.startswith("quizpoin_"):
             with db() as conn:
                 c = conn.cursor()
+                c.execute("SELECT points FROM user_profiles WHERE user_id=?", (user_id,))
+                current_points = c.fetchone()[0]
                 c.execute("UPDATE user_profiles SET points=points+1 WHERE user_id=?", (user_id,))
                 c.execute("UPDATE quiz_winners SET prize=? WHERE quiz_id=? AND user_id=?", ("poin", quiz_id, user_id))
                 conn.commit()
             
+            # Enhanced logging
+            log_points_transaction(user_id, username, "QUIZ_REWARD", 1, current_points + 1)
             log_feature_usage("QUIZ_REWARD", user_id, username, True, f"Quiz #{quiz_id} Point reward claimed")
             log_quiz_activity(user_id, username, "POINT_EARNED", f"1 point earned from quiz #{quiz_id}")
             await query.edit_message_text("✅ Kamu dapat 1 poin! Bisa ditukar Pro nanti.")
@@ -958,6 +1074,9 @@ async def tukarpro7_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 c.execute("UPDATE user_profiles SET pro_expires_at=?, points=points-7 WHERE user_id=?", (expires_at, user_id))
                 conn.commit()
                 
+                # Enhanced logging
+                log_points_transaction(user_id, username, "EXCHANGE_PRO7", -7, points - 7)
+                log_pro_subscription(user_id, username, "POINTS_EXCHANGE", 7, expires_at)
                 log_feature_usage("TUKAR_PRO7", user_id, username, True, f"Exchanged 7 points for Pro 7 days")
                 await update.message.reply_text("✅ Pro aktif 7 hari!")
             else:
@@ -1018,6 +1137,7 @@ async def report_reason_callback(update: Update, context: ContextTypes.DEFAULT_T
                           (user_id, reported_id, reason, int(time.time())))
                 conn.commit()
             
+            log_report_submission(user_id, username, reported_id, reason)
             log_feature_usage("REPORT", user_id, username, True, f"Reported user {reported_id} for reason: {reason}")
             log_moderation(user_id, username, "USER_REPORT", "REPORTED", f"Reported user {reported_id} for {reason}")
             await query.edit_message_text("✅ Laporan terkirim ke Owner. Terima kasih.")
@@ -1029,6 +1149,7 @@ async def report_reason_callback(update: Update, context: ContextTypes.DEFAULT_T
                 c.execute("INSERT OR IGNORE INTO block_list (user_id, blocked_id) VALUES (?,?)", (user_id, blocked_id))
                 conn.commit()
             
+            log_block_action(user_id, username, blocked_id, "BLOCKED")
             log_feature_usage("BLOCK", user_id, username, True, f"Blocked user {blocked_id}")
             log_moderation(user_id, username, "USER_BLOCK", "BLOCKED", f"Blocked user {blocked_id}")
             await query.edit_message_text("✅ User diblok. Kamu tidak akan match dengan user ini lagi.")
@@ -1056,6 +1177,7 @@ async def join_group_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 c.execute("UPDATE groups SET members=? WHERE group_id=?", (",".join(members), gid))
                 conn.commit()
                 
+                log_group_activity(user_id, username, gid, "JOINED", len(members))
                 log_feature_usage("JOIN_GROUP", user_id, username, True, f"Joined existing group #{gid}")
                 await update.message.reply_text(f"✅ Bergabung ke grup #{gid}. Mulai ngobrol!", reply_markup=GROUP_MENU)
             else:
@@ -1064,6 +1186,7 @@ async def join_group_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 gid = c.lastrowid
                 conn.commit()
                 
+                log_group_activity(user_id, username, gid, "CREATED", 1)
                 log_feature_usage("JOIN_GROUP", user_id, username, True, f"Created new group #{gid}")
                 await update.message.reply_text(f"✅ Grup #{gid} dibuat. Tunggu member lain...", reply_markup=GROUP_MENU)
     except Exception as e:
@@ -1086,6 +1209,7 @@ async def leave_group_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 c.execute("UPDATE groups SET members=? WHERE group_id=?", (",".join(members), gid))
                 conn.commit()
                 
+                log_group_activity(user_id, username, gid, "LEFT", len(members))
                 log_feature_usage("LEAVE_GROUP", user_id, username, True, f"Left group #{gid}")
                 await update.message.reply_text(f"Kamu keluar dari grup #{gid}.", reply_markup=MAIN_MENU)
             else:
@@ -1098,18 +1222,24 @@ async def leave_group_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ========== Moderasi Gambar ==========
 def is_nsfw(file_url):
     try:
+        start_time = time.time()
         # Pakai ModerateContent API
         resp = requests.get(NSFW_API_URL, params={"key": NSFW_API_KEY, "url": file_url})
+        response_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
+        
         if resp.ok:
             js = resp.json()
             rating = js.get("rating_label")
             is_nsfw_content = rating and rating != "everyone"
+            log_api_call("ModerateContent_NSFW", True, response_time, f"Rating: {rating}")
             logger.debug(f"NSFW check for {file_url}: {rating} -> {is_nsfw_content}")
             return is_nsfw_content
         else:
+            log_api_call("ModerateContent_NSFW", False, response_time, f"HTTP {resp.status_code}")
             logger.warning(f"NSFW API request failed: {resp.status_code}")
             return False
     except Exception as e:
+        log_api_call("ModerateContent_NSFW", False, None, str(e))
         log_error(f"NSFW check failed: {e}")
         return False
 
@@ -1139,8 +1269,13 @@ async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # Moderasi gambar
         if update.message.photo:
+            start_time = time.time()
             file_id = update.message.photo[-1].file_id
+            file_size = update.message.photo[-1].file_size
             file_url = await context.bot.get_file(file_id)
+            processing_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
+            
+            log_media_processing(user_id, username, "PHOTO", file_id, file_size, processing_time)
             log_message_handling("PHOTO", user_id, username, True, f"Photo received, file_id: {file_id}")
             
             if is_nsfw(file_url.file_path):
@@ -1155,15 +1290,27 @@ async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             log_user_action(user_id, username, "FORWARD_PHOTO", f"Photo forwarded to {partner_id}")
             
         elif update.message.video:
-            log_message_handling("VIDEO", user_id, username, True, f"Video file_id: {update.message.video.file_id}")
-            await context.bot.send_video(partner_id, update.message.video.file_id, caption=update.message.caption)
+            start_time = time.time()
+            file_id = update.message.video.file_id
+            file_size = update.message.video.file_size
+            processing_time = int((time.time() - start_time) * 1000)
+            
+            log_media_processing(user_id, username, "VIDEO", file_id, file_size, processing_time)
+            log_message_handling("VIDEO", user_id, username, True, f"Video file_id: {file_id}")
+            await context.bot.send_video(partner_id, file_id, caption=update.message.caption)
             if secret_mode:
                 await context.bot.delete_message(partner_id, update.message.message_id)
             log_user_action(user_id, username, "FORWARD_VIDEO", f"Video forwarded to {partner_id}")
             
         elif update.message.voice:
-            log_message_handling("VOICE", user_id, username, True, f"Voice file_id: {update.message.voice.file_id}")
-            await context.bot.send_voice(partner_id, update.message.voice.file_id)
+            start_time = time.time()
+            file_id = update.message.voice.file_id
+            file_size = update.message.voice.file_size
+            processing_time = int((time.time() - start_time) * 1000)
+            
+            log_media_processing(user_id, username, "VOICE", file_id, file_size, processing_time)
+            log_message_handling("VOICE", user_id, username, True, f"Voice file_id: {file_id}")
+            await context.bot.send_voice(partner_id, file_id)
             if secret_mode:
                 await context.bot.delete_message(partner_id, update.message.message_id)
             log_user_action(user_id, username, "FORWARD_VOICE", f"Voice forwarded to {partner_id}")
@@ -1275,6 +1422,7 @@ async def feedback_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                       (user_id, partner_id, rating, "", int(time.time())))
             conn.commit()
         
+        log_feedback_submission(user_id, username, partner_id, rating)
         log_feature_usage("FEEDBACK", user_id, username, True, f"Rating {rating} stars for partner {partner_id}")
         log_user_action(user_id, username, "FEEDBACK_SUBMITTED", f"Rating: {rating} stars, Partner: {partner_id}")
         await query.edit_message_text("Terima kasih atas feedbackmu!")
@@ -1314,8 +1462,10 @@ async def poll_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             c = conn.cursor()
             c.execute("INSERT INTO polls (question, options, responses, created_at) VALUES (?,?,?,?)",
                       (question, ",".join(options), "", int(time.time())))
+            poll_id = c.lastrowid
             conn.commit()
         
+        log_poll_creation(user_id, username, poll_id, question, len(options))
         log_feature_usage("POLL", user_id, username, True, f"Poll created: {question} with {len(options)} options")
     except Exception as e:
         log_error(f"Poll message failed: {e}", user_id, username)
@@ -1333,6 +1483,7 @@ async def secret_mode_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
             c.execute("UPDATE sessions SET secret_mode=1 WHERE user_id=?", (user_id,))
             conn.commit()
         
+        log_secret_mode(user_id, username, "ACTIVATED", True)
         log_feature_usage("SECRET_MODE", user_id, username, True, "Secret mode activated")
         await update.message.reply_text("Mode rahasia aktif. Pesanmu akan dihapus otomatis setelah dibaca.")
     except Exception as e:
@@ -1392,6 +1543,7 @@ def broadcast_quiz_winners(context: ContextTypes.DEFAULT_TYPE, quiz_id):
 # ========== Handler Registrasi ==========
 def main():
     try:
+        log_bot_startup()
         logger.info("Starting bot initialization...")
         init_db()
         application = Application.builder().token(BOT_TOKEN).build()
@@ -1400,23 +1552,41 @@ def main():
         # Command
         logger.info("Registering command handlers...")
         application.add_handler(CommandHandler("start", start))
+        log_handler_registration("COMMAND", "start")
         application.add_handler(CommandHandler("help", help_cmd))
+        log_handler_registration("COMMAND", "help")
         application.add_handler(CommandHandler("profile", profile_cmd))
+        log_handler_registration("COMMAND", "profile")
         application.add_handler(CommandHandler("upgrade", help_cmd)) # implementasi payment bisa tambah
+        log_handler_registration("COMMAND", "upgrade")
         application.add_handler(CommandHandler("search", start))
+        log_handler_registration("COMMAND", "search")
         application.add_handler(CommandHandler("searchpro", search_pro_cmd))
+        log_handler_registration("COMMAND", "searchpro")
         application.add_handler(CommandHandler("playquiz", play_quiz_cmd))
+        log_handler_registration("COMMAND", "playquiz")
         application.add_handler(CommandHandler("answer", answer_quiz_cmd))
+        log_handler_registration("COMMAND", "answer")
         application.add_handler(CommandHandler("tukarpro7", tukarpro7_cmd))
+        log_handler_registration("COMMAND", "tukarpro7")
         application.add_handler(CommandHandler("redeem", redeem_points_cmd))
+        log_handler_registration("COMMAND", "redeem")
         application.add_handler(CommandHandler("joingroup", join_group_cmd))
+        log_handler_registration("COMMAND", "joingroup")
         application.add_handler(CommandHandler("leavegroup", leave_group_cmd))
+        log_handler_registration("COMMAND", "leavegroup")
         application.add_handler(CommandHandler("next", next_cmd))
+        log_handler_registration("COMMAND", "next")
         application.add_handler(CommandHandler("stop", stop_cmd))
+        log_handler_registration("COMMAND", "stop")
         application.add_handler(CommandHandler("report", report_cmd))
+        log_handler_registration("COMMAND", "report")
         application.add_handler(CommandHandler("feedback", feedback_cmd))
+        log_handler_registration("COMMAND", "feedback")
         application.add_handler(CommandHandler("poll", poll_cmd))
+        log_handler_registration("COMMAND", "poll")
         application.add_handler(CommandHandler("secretmode", secret_mode_cmd))
+        log_handler_registration("COMMAND", "secretmode")
         logger.info("Command handlers registered successfully")
         
         # Profile Conversation
@@ -1434,6 +1604,7 @@ def main():
             fallbacks=[CommandHandler("cancel", profile_cancel)]
         )
         application.add_handler(profile_conv)
+        log_handler_registration("CONVERSATION", "profile")
         logger.info("Profile conversation handler registered successfully")
 
         # Search Pro Conversation
@@ -1450,48 +1621,58 @@ def main():
             fallbacks=[]
         )
         application.add_handler(search_conv)
+        log_handler_registration("CONVERSATION", "search_pro")
         logger.info("Search pro conversation handler registered successfully")
 
         # Quiz reward
         logger.info("Registering quiz reward callback handler...")
         application.add_handler(CallbackQueryHandler(quiz_reward_callback, pattern=r"^quiz(pro|poin)_"))
+        log_handler_registration("CALLBACK", "quiz_reward")
 
         # Report & block
         logger.info("Registering report and block callback handlers...")
         application.add_handler(CallbackQueryHandler(report_reason_callback, pattern=r"^(report_|block_)"))
+        log_handler_registration("CALLBACK", "report_block")
 
         # Feedback
         logger.info("Registering feedback callback handler...")
         application.add_handler(CallbackQueryHandler(feedback_callback, pattern=r"^fb_"))
+        log_handler_registration("CALLBACK", "feedback")
 
         # Polling
         logger.info("Registering polling message handlers...")
         application.add_handler(MessageHandler(filters.Regex("^Poll$"), poll_cmd))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, poll_message))
+        log_handler_registration("MESSAGE", "poll")
 
         # Forward message (media, teks, voice dsb)
         logger.info("Registering forward message handler...")
         application.add_handler(MessageHandler(
             filters.ALL & ~filters.COMMAND, forward_message
         ))
+        log_handler_registration("MESSAGE", "forward")
 
         # Group chat
         logger.info("Registering group chat handlers...")
         application.add_handler(MessageHandler(filters.Regex("^Join Group$"), join_group_cmd))
         application.add_handler(MessageHandler(filters.Regex("^Leave Group$"), leave_group_cmd))
+        log_handler_registration("MESSAGE", "group_chat")
 
         # Secret mode
         logger.info("Registering secret mode handler...")
         application.add_handler(MessageHandler(filters.Regex("^Secret Mode$"), secret_mode_cmd))
+        log_handler_registration("MESSAGE", "secret_mode")
 
         # Feedback
         logger.info("Registering feedback button handler...")
         application.add_handler(MessageHandler(filters.Regex("^Feedback$"), feedback_cmd))
+        log_handler_registration("MESSAGE", "feedback_button")
 
         # Next/Stop
         logger.info("Registering next/stop button handlers...")
         application.add_handler(MessageHandler(filters.Regex("^Next$"), next_cmd))
         application.add_handler(MessageHandler(filters.Regex("^Stop$"), stop_cmd))
+        log_handler_registration("MESSAGE", "next_stop")
 
         # Leaderboard daily job
         logger.info("Setting up daily leaderboard job...")
@@ -1500,6 +1681,7 @@ def main():
         logger.info("Daily leaderboard job scheduled successfully")
 
         logger.info("All handlers registered successfully. Starting bot...")
+        log_system_health("Bot", "READY", "All handlers registered and job queue configured")
         logger.info("=== BOT READY TO START POLLING ===")
         application.run_polling()
         
@@ -1510,13 +1692,12 @@ def main():
 if __name__ == "__main__":
     try:
         logger.info("=== BOT STARTING ===")
-        logger.info(f"Bot Token: {'SET' if BOT_TOKEN != 'YOUR_BOT_TOKEN' else 'NOT SET'}")
-        logger.info(f"Owner ID: {OWNER_ID}")
-        logger.info(f"Database Path: {DB_PATH}")
-        logger.info(f"NSFW API Key: {'SET' if NSFW_API_KEY != 'YOUR_MODERATECONTENT_API_KEY' else 'NOT SET'}")
+        log_system_health("Startup", "INITIATED", "Bot startup sequence started")
         main()
     except KeyboardInterrupt:
         logger.info("Bot stopped by user (Ctrl+C)")
+        log_system_health("Shutdown", "GRACEFUL", "Bot stopped by user interrupt")
     except Exception as e:
         log_error(f"Bot crashed: {e}")
+        log_system_health("Shutdown", "CRASH", f"Bot crashed with error: {e}")
         raise
