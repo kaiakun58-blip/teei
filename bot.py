@@ -78,6 +78,28 @@ def log_message_handling(message_type, user_id, username, success=True, details=
     status = "SUCCESS" if success else "FAILED"
     logger.info(f"MESSAGE | {message_type} | User {user_id} (@{username}) | {status} | {details}")
 
+def log_conversation_state(user_id, username, state, details=""):
+    """Log conversation state changes"""
+    logger.info(f"CONVERSATION | User {user_id} (@{username}) | State: {state} | {details}")
+
+def log_callback_query(user_id, username, callback_data, success=True, details=""):
+    """Log callback query handling"""
+    status = "SUCCESS" if success else "FAILED"
+    logger.info(f"CALLBACK | User {user_id} (@{username}) | Data: {callback_data} | {status} | {details}")
+
+def log_quiz_activity(user_id, username, action, details=""):
+    """Log quiz-related activities"""
+    logger.info(f"QUIZ | User {user_id} (@{username}) | {action} | {details}")
+
+def log_pro_feature(user_id, username, feature, success=True, details=""):
+    """Log pro feature usage"""
+    status = "SUCCESS" if success else "FAILED"
+    logger.info(f"PRO_FEATURE | User {user_id} (@{username}) | {feature} | {status} | {details}")
+
+def log_moderation(user_id, username, content_type, action, details=""):
+    """Log content moderation activities"""
+    logger.info(f"MODERATION | User {user_id} (@{username}) | {content_type} | {action} | {details}")
+
 # ========== State ==========
 PROFILE_GENDER, PROFILE_AGE, PROFILE_BIO, PROFILE_PHOTO, PROFILE_LANG, PROFILE_HOBBY = range(6)
 SEARCH_TYPE, SEARCH_GENDER, SEARCH_HOBBY, SEARCH_AGE_MIN, SEARCH_AGE_MAX = range(6, 11)
@@ -515,6 +537,7 @@ async def profile_gender(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         context.user_data['gender'] = gender
         log_user_action(user_id, username, "PROFILE_GENDER_SET", f"Gender set to: {gender}")
+        log_conversation_state(user_id, username, "PROFILE_AGE", "Moving to age input")
         await update.message.reply_text("Usia kamu?")
         return PROFILE_AGE
     except Exception as e:
@@ -530,6 +553,7 @@ async def profile_age(update: Update, context: ContextTypes.DEFAULT_TYPE):
         age = int(update.message.text)
         context.user_data['age'] = age
         log_user_action(user_id, username, "PROFILE_AGE_SET", f"Age set to: {age}")
+        log_conversation_state(user_id, username, "PROFILE_BIO", "Moving to bio input")
         await update.message.reply_text("Bio singkat kamu?")
         return PROFILE_BIO
     except ValueError:
@@ -549,6 +573,7 @@ async def profile_bio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         context.user_data['bio'] = bio
         log_user_action(user_id, username, "PROFILE_BIO_SET", f"Bio length: {len(bio)} chars")
+        log_conversation_state(user_id, username, "PROFILE_PHOTO", "Moving to photo input")
         await update.message.reply_text("Kirim foto profil kamu.")
         return PROFILE_PHOTO
     except Exception as e:
@@ -565,6 +590,7 @@ async def profile_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         photo_id = photo.file_id
         context.user_data['photo_id'] = photo_id
         log_user_action(user_id, username, "PROFILE_PHOTO_SET", f"Photo ID: {photo_id}")
+        log_conversation_state(user_id, username, "PROFILE_LANG", "Moving to language selection")
         await update.message.reply_text("Pilih bahasa botmu.",
             reply_markup=ReplyKeyboardMarkup([LANGS], one_time_keyboard=True, resize_keyboard=True))
         return PROFILE_LANG
@@ -586,6 +612,7 @@ async def profile_lang(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         context.user_data['language'] = lang
         log_user_action(user_id, username, "PROFILE_LANG_SET", f"Language set to: {lang}")
+        log_conversation_state(user_id, username, "PROFILE_HOBBY", "Moving to hobby selection")
         await update.message.reply_text("Pilih hobi kamu (bisa lebih dari satu, pisahkan dengan koma).\nContoh: Music, Coding",
             reply_markup=ReplyKeyboardMarkup([HOBBIES], one_time_keyboard=True, resize_keyboard=True))
         return PROFILE_HOBBY
@@ -668,20 +695,25 @@ async def search_type_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     try:
         await query.answer()
+        log_callback_query(user_id, username, search_type, True, "Search type selection")
+        
         if search_type == "search_gender":
             log_user_action(user_id, username, "SEARCH_TYPE_SELECTED", "Gender search")
             await query.edit_message_text("Gender partner yang kamu cari?", reply_markup=ReplyKeyboardMarkup([GENDERS], one_time_keyboard=True, resize_keyboard=True))
             context.user_data['search_mode'] = "gender"
+            log_conversation_state(user_id, username, "SEARCH_GENDER", "Gender selection started")
             return SEARCH_GENDER
         elif search_type == "search_hobby":
             log_user_action(user_id, username, "SEARCH_TYPE_SELECTED", "Hobby search")
             await query.edit_message_text("Hobi partner yang kamu cari?", reply_markup=ReplyKeyboardMarkup([HOBBIES], one_time_keyboard=True, resize_keyboard=True))
             context.user_data['search_mode'] = "hobby"
+            log_conversation_state(user_id, username, "SEARCH_HOBBY", "Hobby selection started")
             return SEARCH_HOBBY
         elif search_type == "search_gender_hobby":
             log_user_action(user_id, username, "SEARCH_TYPE_SELECTED", "Gender & Hobby search")
             await query.edit_message_text("Gender partner yang kamu cari?", reply_markup=ReplyKeyboardMarkup([GENDERS], one_time_keyboard=True, resize_keyboard=True))
             context.user_data['search_mode'] = "gender_hobby"
+            log_conversation_state(user_id, username, "SEARCH_GENDER", "Gender selection started for gender+hobby search")
             return SEARCH_GENDER
     except Exception as e:
         log_error(f"Search type callback failed: {e}", user_id, username)
@@ -698,9 +730,11 @@ async def search_gender_step(update: Update, context: ContextTypes.DEFAULT_TYPE)
         log_user_action(user_id, username, "SEARCH_GENDER_SET", f"Gender preference: {gender_pref}")
         
         if context.user_data.get('search_mode') == "gender_hobby":
+            log_conversation_state(user_id, username, "SEARCH_HOBBY", "Moving to hobby selection for gender+hobby search")
             await update.message.reply_text("Hobi partner yang kamu cari?", reply_markup=ReplyKeyboardMarkup([HOBBIES], one_time_keyboard=True, resize_keyboard=True))
             return SEARCH_HOBBY
         else:
+            log_conversation_state(user_id, username, "SEARCH_AGE_MIN", "Moving to age minimum input")
             await update.message.reply_text("Umur minimum partner?")
             return SEARCH_AGE_MIN
     except Exception as e:
@@ -717,12 +751,9 @@ async def search_hobby_step(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data['hobby_pref'] = hobby_pref
         log_user_action(user_id, username, "SEARCH_HOBBY_SET", f"Hobby preference: {hobby_pref}")
         
-        if context.user_data.get('search_mode') == "hobby":
-            await update.message.reply_text("Umur minimum partner?")
-            return SEARCH_AGE_MIN
-        else:
-            await update.message.reply_text("Umur minimum partner?")
-            return SEARCH_AGE_MIN
+        log_conversation_state(user_id, username, "SEARCH_AGE_MIN", "Moving to age minimum input")
+        await update.message.reply_text("Umur minimum partner?")
+        return SEARCH_AGE_MIN
     except Exception as e:
         log_error(f"Search hobby step failed: {e}", user_id, username)
         await update.message.reply_text("❌ Terjadi kesalahan. Silakan coba lagi.")
@@ -736,6 +767,7 @@ async def search_age_min_step(update: Update, context: ContextTypes.DEFAULT_TYPE
         age_min = int(update.message.text)
         context.user_data['age_min'] = age_min
         log_user_action(user_id, username, "SEARCH_AGE_MIN_SET", f"Min age: {age_min}")
+        log_conversation_state(user_id, username, "SEARCH_AGE_MAX", "Moving to age maximum input")
         await update.message.reply_text("Umur maksimum partner?")
         return SEARCH_AGE_MAX
     except ValueError:
@@ -863,6 +895,8 @@ async def quiz_reward_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     try:
         await query.answer()
+        log_callback_query(user_id, username, query.data, True, f"Quiz reward selection for quiz #{quiz_id}")
+        
         if query.data.startswith("quizpro_"):
             expires_at = int(time.time()) + 86400
             with db() as conn:
@@ -872,6 +906,7 @@ async def quiz_reward_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 conn.commit()
             
             log_feature_usage("QUIZ_REWARD", user_id, username, True, f"Quiz #{quiz_id} Pro reward claimed")
+            log_pro_feature(user_id, username, "QUIZ_PRO_REWARD", True, f"Pro activated for 1 day from quiz #{quiz_id}")
             await query.edit_message_text("✅ Pro aktif 1 hari!")
         elif query.data.startswith("quizpoin_"):
             with db() as conn:
@@ -881,6 +916,7 @@ async def quiz_reward_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                 conn.commit()
             
             log_feature_usage("QUIZ_REWARD", user_id, username, True, f"Quiz #{quiz_id} Point reward claimed")
+            log_quiz_activity(user_id, username, "POINT_EARNED", f"1 point earned from quiz #{quiz_id}")
             await query.edit_message_text("✅ Kamu dapat 1 poin! Bisa ditukar Pro nanti.")
     except Exception as e:
         log_error(f"Quiz reward callback failed: {e}", user_id, username)
@@ -965,6 +1001,8 @@ async def report_reason_callback(update: Update, context: ContextTypes.DEFAULT_T
     
     try:
         await query.answer()
+        log_callback_query(user_id, username, query.data, True, "Report/block action")
+        
         if query.data.startswith("report_"):
             reason = query.data.replace("report_", "")
             with db() as conn:
@@ -981,6 +1019,7 @@ async def report_reason_callback(update: Update, context: ContextTypes.DEFAULT_T
                 conn.commit()
             
             log_feature_usage("REPORT", user_id, username, True, f"Reported user {reported_id} for reason: {reason}")
+            log_moderation(user_id, username, "USER_REPORT", "REPORTED", f"Reported user {reported_id} for {reason}")
             await query.edit_message_text("✅ Laporan terkirim ke Owner. Terima kasih.")
             await context.bot.send_message(OWNER_ID, f"🚩 Report: {mask_username(username)} melaporkan {mask_username('')} Alasan: {reason}")
         elif query.data.startswith("block_"):
@@ -991,6 +1030,7 @@ async def report_reason_callback(update: Update, context: ContextTypes.DEFAULT_T
                 conn.commit()
             
             log_feature_usage("BLOCK", user_id, username, True, f"Blocked user {blocked_id}")
+            log_moderation(user_id, username, "USER_BLOCK", "BLOCKED", f"Blocked user {blocked_id}")
             await query.edit_message_text("✅ User diblok. Kamu tidak akan match dengan user ini lagi.")
     except Exception as e:
         log_error(f"Report reason callback failed: {e}", user_id, username)
@@ -1101,8 +1141,10 @@ async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if update.message.photo:
             file_id = update.message.photo[-1].file_id
             file_url = await context.bot.get_file(file_id)
+            log_message_handling("PHOTO", user_id, username, True, f"Photo received, file_id: {file_id}")
+            
             if is_nsfw(file_url.file_path):
-                log_user_action(user_id, username, "MODERATION_NSFW_IMAGE", "NSFW image detected")
+                log_moderation(user_id, username, "IMAGE", "NSFW_DETECTED", f"File: {file_id}")
                 await update.message.reply_text("🚫 Gambar tidak aman (NSFW).")
                 await context.bot.send_message(OWNER_ID, f"NSFW image by {mask_username(username)}")
                 return
@@ -1113,22 +1155,26 @@ async def forward_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             log_user_action(user_id, username, "FORWARD_PHOTO", f"Photo forwarded to {partner_id}")
             
         elif update.message.video:
+            log_message_handling("VIDEO", user_id, username, True, f"Video file_id: {update.message.video.file_id}")
             await context.bot.send_video(partner_id, update.message.video.file_id, caption=update.message.caption)
             if secret_mode:
                 await context.bot.delete_message(partner_id, update.message.message_id)
             log_user_action(user_id, username, "FORWARD_VIDEO", f"Video forwarded to {partner_id}")
             
         elif update.message.voice:
+            log_message_handling("VOICE", user_id, username, True, f"Voice file_id: {update.message.voice.file_id}")
             await context.bot.send_voice(partner_id, update.message.voice.file_id)
             if secret_mode:
                 await context.bot.delete_message(partner_id, update.message.message_id)
             log_user_action(user_id, username, "FORWARD_VOICE", f"Voice forwarded to {partner_id}")
             
         elif update.message.sticker:
+            log_message_handling("STICKER", user_id, username, True, f"Sticker file_id: {update.message.sticker.file_id}")
             await context.bot.send_sticker(partner_id, update.message.sticker.file_id)
             log_user_action(user_id, username, "FORWARD_STICKER", f"Sticker forwarded to {partner_id}")
             
         elif update.message.text:
+            log_message_handling("TEXT", user_id, username, True, f"Text length: {len(update.message.text)} chars")
             await context.bot.send_message(partner_id, update.message.text)
             if secret_mode:
                 await context.bot.delete_message(partner_id, update.message.message_id)
@@ -1217,6 +1263,9 @@ async def feedback_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     rating = int(query.data.split("_")[1])
     
     try:
+        await query.answer()
+        log_callback_query(user_id, username, query.data, True, f"Feedback rating: {rating} stars")
+        
         with db() as conn:
             c = conn.cursor()
             c.execute("SELECT partner_id FROM sessions WHERE user_id=?", (user_id,))
@@ -1227,7 +1276,7 @@ async def feedback_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             conn.commit()
         
         log_feature_usage("FEEDBACK", user_id, username, True, f"Rating {rating} stars for partner {partner_id}")
-        await query.answer()
+        log_user_action(user_id, username, "FEEDBACK_SUBMITTED", f"Rating: {rating} stars, Partner: {partner_id}")
         await query.edit_message_text("Terima kasih atas feedbackmu!")
     except Exception as e:
         log_error(f"Feedback callback failed: {e}", user_id, username)
@@ -1451,6 +1500,7 @@ def main():
         logger.info("Daily leaderboard job scheduled successfully")
 
         logger.info("All handlers registered successfully. Starting bot...")
+        logger.info("=== BOT READY TO START POLLING ===")
         application.run_polling()
         
     except Exception as e:
